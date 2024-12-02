@@ -1,0 +1,12 @@
+#version 460 core
+
+layout (location = 0) in vec4 inPosition;
+
+uniform mat4 MVPMatrix;
+
+void main()
+{
+	gl_Position = MVPMatrix * inPosition;
+}
+
+//#end
