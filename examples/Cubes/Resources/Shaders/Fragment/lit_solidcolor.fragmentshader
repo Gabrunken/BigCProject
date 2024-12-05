@@ -1,0 +1,33 @@
+#version 460 core
+
+in vec3 fragPos;
+in vec3 normal;
+
+uniform bool smoothShaded = false;
+uniform vec4 color;
+
+out vec4 outColor;
+
+void main()
+{
+	float lightValue = 0.0f;
+	vec3 lightPosition = vec3(1.0f, 1.0f, 1.0f);
+
+	if(smoothShaded)
+	{
+		lightValue = dot(normalize(normal), lightPosition);
+	}
+
+	else
+	{
+		vec3 flatNormal = normalize(
+			cross(dFdx(fragPos), dFdy(fragPos))
+			);
+
+		lightValue = dot(flatNormal, lightPosition);
+	}
+
+	outColor = vec4(color) * lightValue;
+}
+
+//#end

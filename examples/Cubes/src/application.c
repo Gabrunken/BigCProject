@@ -4,7 +4,7 @@
 #include <input.h>
 #include <math.h>
 
-static bigc_ShaderProgram unlitTexturedShaderProgram, unlitSolidColorShaderProgram;
+static bigc_ShaderProgram unlitTexturedShaderProgram, litSolidColorShaderProgram;
 static bigc_Texture testTexture;
 static bigc_Model sphereModel;
 static bigc_Prop sphereProp;
@@ -42,13 +42,13 @@ void Initialize()
 	glfwSetMouseButtonCallback(bigc_mainWindow, MouseButtonCallback);
 	glfwSetKeyCallback(bigc_mainWindow, KeyboardCallback);
 
-	sphereModel = bigc_model_LoadFromDiskAsSingleModel("./Resources/Models/sphere.gltf");
+	sphereModel = bigc_model_LoadOBJFromDisk("./Resources/Models/cube.obj");
 
 	unlitTexturedShaderProgram = bigc_shaders_LoadFromDisk("./Resources/Shaders/Vertex/unlit_textured.vertexshader",
 												   "./Resources/Shaders/Fragment/unlit_textured.fragmentshader");
 
-	unlitSolidColorShaderProgram = bigc_shaders_LoadFromDisk("./Resources/Shaders/Vertex/unlit_solidcolor.vertexshader",
-												   "./Resources/Shaders/Fragment/unlit_solidcolor.fragmentshader");
+	litSolidColorShaderProgram = bigc_shaders_LoadFromDisk("./Resources/Shaders/Vertex/lit_solidcolor.vertexshader",
+												   "./Resources/Shaders/Fragment/lit_solidcolor.fragmentshader");
 
 	//bigc_Texture loading is to be fixed
 	//testTexture = bigc_texture_LoadFromDisk("./Resources/Images/test.jpg");
@@ -56,7 +56,7 @@ void Initialize()
 	bigc_camera_MoveByAmount((vec3){0.0f, 0.0f, -4.0f});
 	bigc_camera_SetPerspectiveProjection(60, WINDOW_WIDTH / WINDOW_HEIGHT, 0.1f, 100.0f);
 	
-	sphereMaterial.shaderReference = &unlitSolidColorShaderProgram;
+	sphereMaterial.shaderReference = &litSolidColorShaderProgram;
 
 	bigc_material_UpdateVec4(&sphereMaterial, "color", (vec4){0.0f, 1.0f, 0.5f, 1.0f});
 
@@ -95,7 +95,7 @@ void CleanUp()
 
 	//Free everything from gpu
 	bigc_shaders_FreeFromGPU(&unlitTexturedShaderProgram);
-	bigc_shaders_FreeFromGPU(&unlitSolidColorShaderProgram);
+	bigc_shaders_FreeFromGPU(&litSolidColorShaderProgram);
 	bigc_model_FreeFromGPU(&sphereModel);
 	//bigc_texture_FreeFromGPU(&testTexture);
 
