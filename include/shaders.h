@@ -16,7 +16,9 @@ typedef struct bigc_ShaderProgram
 
 #define BIGC_BAD_SHADER_PROGRAM (bigc_ShaderProgram){0, {}, {}, 0}
 
-#define BIGC_MVP_MATRIX_NAME "MVPMatrix"
+#define BIGC_MODEL_MATRIX_NAME "modelMatrix"
+#define BIGC_VIEW_MATRIX_NAME "viewMatrix"
+#define BIGC_PROJECTION_MATRIX_NAME "projectionMatrix"
 
 bigc_ShaderProgram bigc_shaders_LoadFromDisk(const char* vertexShaderPath, const char* fragmentShaderPath);
 
@@ -25,7 +27,7 @@ void bigc_shaders_SetVec3(bigc_ShaderProgram* shader, const char* variableName, 
 void bigc_shaders_SetVec4(bigc_ShaderProgram* shader, const char* variableName, vec4 value);
 void bigc_shaders_SetMatrix(bigc_ShaderProgram* shader, const char* matrixName, mat4 value);
 
-//Deletes shader program and also the argument given gets set to 0.
-void bigc_shaders_FreeFromGPU(unsigned int* shaderHandle);
+//Deletes shader program and also the handle given inside the struct gets set to 0.
+void bigc_shaders_FreeFromGPU(bigc_ShaderProgram* shaderPointer);
 
 #endif

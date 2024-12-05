@@ -23,12 +23,15 @@ typedef struct bigc_VertexDataLayout
 
 #define BIGC_BAD_MODEL (bigc_Model){0, 0, 0, 0}
 
+#define BIGC_VERTEX_POSITION 0x00000001
+#define BIGC_VERTEX_UV 		 BIGC_VERTEX_POSITION<<1
+#define BIGC_VERTEX_NORMAL   BIGC_VERTEX_POSITION<<2
+
 bigc_Model bigc_model_SendToGPU(const void* vertexData, unsigned int bytesOfVertices,
 					   const bigc_VertexDataLayout* vertexDataLayout,
 					   const unsigned int* indexData, unsigned int bytesOfIndices);
 
-bigc_Model bigc_model_LoadFromDiskAsSingleModel(const char* filePath); //load a .gltf file from disk and does not separate meshes, pours everything into a single VAO
-//bigc_Model* bigc_model_LoadFromDiskAsMultipleModels(const char* filePath);
+bigc_Model bigc_model_LoadOBJFromDisk(const char* filePath);
 
 void bigc_model_FreeFromGPU(bigc_Model* model);
 

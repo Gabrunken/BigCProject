@@ -5,7 +5,6 @@
 mat4 bigc_modelMatrix;
 mat4 bigc_viewMatrix;
 mat4 bigc_projectionMatrix;
-mat4 bigc_MVPMatrix;
 
 //Make them global so we always know whats the currently bound object, with that we don't have to rebind it again.
 static GLuint currentlyBoundVertexArray;
@@ -29,7 +28,6 @@ void bigc_draw_InitializeModule()
 	glmc_mat4_identity(bigc_modelMatrix);
 	glmc_mat4_identity(bigc_viewMatrix);
 	glmc_mat4_identity(bigc_projectionMatrix);
-	glmc_mat4_identity(bigc_MVPMatrix);
 }
 
 void bigc_draw_SetDrawCallback(void (*callback)(void))
@@ -50,13 +48,33 @@ void bigc_draw_SetClearFlags(int flags)
 	clearFlags = flags;
 }
 
-void bigc_draw_Model(bigc_Model model, const bigc_Material* materialReference)
+void bigc_draw_Model(const bigc_Model* model, const bigc_Material* materialReference)
 {
-	//Bind the vertex array if not already bound
-	if(currentlyBoundVertexArray != model.vertexArrayHandle && model.vertexArrayHandle != 0)
+	//Check first of all if the passed model is valid or not
+	if(model->vertexArrayHandle == 0)
 	{
-		glBindVertexArray(model.vertexArrayHandle);
-		currentlyBoundVertexArray = model.vertexArrayHandle;
+		#ifdef DEBUG
+		BIGC_LOG_WARNING("cannot draw an invalid model");
+		#endif
+		return;
+	}
+
+	//Bind the vertex array if not already bound
+	if(currentlyBoundVertexArray != model->vertexArrayHandle)
+	{
+		glBindVertexArray(model->vertexArrayHandle);
+		currentlyBoundVertexArray = model->vertexArrayHandle;
+	}
+
+	//Check if the passed shader is valid or not
+	if(materialReference->shaderReference->handle == 0)
+	{
+		#ifdef DEBUG
+		BIGC_LOG_WARNING("cannot draw with an invalid shader");
+		#endif
+
+		//TODO: prolly just bind a standard shader
+		return;
 	}
 
 	//Bind the shader if not already bound
@@ -67,16 +85,36 @@ void bigc_draw_Model(bigc_Model model, const bigc_Material* materialReference)
 	}
 
 	bigc_material_UploadDataToShader(materialReference);
-	glDrawElements(GL_TRIANGLES, model.indicesCount, GL_UNSIGNED_INT, NULL);
+	glDrawElements(GL_TRIANGLES, model->indicesCount, GL_UNSIGNED_INT, NULL);
 }
 
 void bigc_draw_Prop(const bigc_Prop* prop)
 {
+	//Check first of all if the passed prop is valid or not
+	if(prop->modelReference->vertexArrayHandle == 0)
+	{
+		#ifdef DEBUG
+		BIGC_LOG_WARNING("cannot draw a prop with an invalid model reference");
+		#endif
+		return;
+	}
+
 	//Bind the vertex array if not already bound
-	if(currentlyBoundVertexArray != prop->modelReference->vertexArrayHandle && prop->modelReference->vertexArrayHandle != 0)
+	if(currentlyBoundVertexArray != prop->modelReference->vertexArrayHandle)
 	{
 		glBindVertexArray(prop->modelReference->vertexArrayHandle);
 		currentlyBoundVertexArray = prop->modelReference->vertexArrayHandle;
+	}
+
+	//Check if the passed shader is valid or not
+	if(prop->materialReference->shaderReference->handle == 0)
+	{
+		#ifdef DEBUG
+		BIGC_LOG_WARNING("cannot draw with an invalid shader");
+		#endif
+
+		//TODO: prolly just bind a standard shader
+		return;
 	}
 
 	//Bind the shader if not already bound
@@ -93,6 +131,14 @@ void bigc_draw_Prop(const bigc_Prop* prop)
 
 void bigc_draw_DrawCallback()
 {
+	if(DrawCallback == NULL)
+	{
+		#ifdef DEBUG
+		BIGC_LOG_ERROR("before calling the draw function you must first set a draw callback");
+		#endif
+		return;
+	}
+
 	bigc_camera_LoadToViewMatrix();
 
 	glClear(clearFlags);

@@ -1,13 +1,14 @@
 #include <texture.h>
 #include <gl3w.h>
 #include <bigc.h>
+#include <stb_image.h>
 
 static unsigned char maxTextureSlots;
 static unsigned char currentlyBoundSlot;
 
 void bigc_texture_InitializeModule()
 {
-	glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &maxTextureSlots);
+	glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, (GLint*)&maxTextureSlots);
 	//Tell stbi to flip images vertically, because opengl wants them in a certain order, which stbi does not have by default, but with this function it does.
 	stbi_set_flip_vertically_on_load(BIGC_TRUE);
 }

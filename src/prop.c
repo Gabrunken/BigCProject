@@ -3,7 +3,6 @@
 extern mat4 bigc_modelMatrix;
 extern mat4 bigc_viewMatrix;
 extern mat4 bigc_projectionMatrix;
-extern mat4 bigc_MVPMatrix;
 
 void bigc_prop_Initialize(bigc_Prop* prop, const bigc_Model* model, const bigc_Material* material)
 {
@@ -63,6 +62,8 @@ void bigc_prop_LoadToMVP(bigc_Prop* prop)
 	glmc_rotate_z(bigc_modelMatrix, prop->transform.rotation[2], bigc_modelMatrix);
 	glmc_scale(bigc_modelMatrix, prop->transform.scale);
 	
-	glmc_mat4_mulN((mat4*[]){&bigc_projectionMatrix, &bigc_viewMatrix, &bigc_modelMatrix}, 3, bigc_MVPMatrix);
-	bigc_material_UpdateMatrix(prop->materialReference, BIGC_MVP_MATRIX_NAME, bigc_MVPMatrix);	
+	//update the mvp in shader
+	bigc_material_UpdateMatrix(prop->materialReference, BIGC_MODEL_MATRIX_NAME, bigc_modelMatrix);	
+	bigc_material_UpdateMatrix(prop->materialReference, BIGC_VIEW_MATRIX_NAME, bigc_viewMatrix);	
+	bigc_material_UpdateMatrix(prop->materialReference, BIGC_PROJECTION_MATRIX_NAME, bigc_projectionMatrix);	
 }
