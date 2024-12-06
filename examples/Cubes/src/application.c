@@ -42,7 +42,7 @@ void Initialize()
 	glfwSetMouseButtonCallback(bigc_mainWindow, MouseButtonCallback);
 	glfwSetKeyCallback(bigc_mainWindow, KeyboardCallback);
 
-	sphereModel = bigc_model_LoadOBJFromDisk("./Resources/Models/cube.obj");
+	sphereModel = bigc_model_LoadOBJFromDisk("./Resources/Models/text.obj");
 
 	unlitTexturedShaderProgram = bigc_shaders_LoadFromDisk("./Resources/Shaders/Vertex/unlit_textured.vertexshader",
 												   "./Resources/Shaders/Fragment/unlit_textured.fragmentshader");

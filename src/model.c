@@ -179,11 +179,14 @@ bigc_Model bigc_model_LoadOBJFromDisk(const char* filePath)
 	}
 
 	//duplicate attributes which do not match by count with the positions (like normals could be less than positions)
+	//and duplicate positions too if necessary! like if there are uv seams, you know if there are by looking at UV coordinates, if they are more than positions, than theres a seam
+	//for that normals gotta be duplicated too
 	//TODO
 
 	uint32_t byteCounter = 0;
 	fseek(filePointer, 0, SEEK_SET); //reset the file cursor to read it from the start
 	//second pass
+	//now actually fill the arrays
 	while(fgets(lineString, sizeof(lineString), filePointer) != NULL)
 	{
 		//here we have a line
@@ -195,24 +198,21 @@ bigc_Model bigc_model_LoadOBJFromDisk(const char* filePath)
 		if(strcmp(word, "v") == 0)
 		{
 			vec3 position;
-			sscanf(lineString, "%*s %f %f %f", &position[0], &position[1], &position[2]);
-			memcpy(vertexData + byteCounter, &position, sizeof(vec3));
+			sscanf(lineString, "%*s %f %f %f", (float*)(vertexData + byteCounter), (float*)(vertexData + byteCounter + sizeof(float)), (float*)(vertexData + byteCounter + sizeof(float) * 2));
 			byteCounter += sizeof(vec3);
 		}
 
 		else if(strcmp(word, "vn") == 0)
 		{
 			vec3 normal;
-			sscanf(lineString, "%*s %f %f %f", &normal[0], &normal[1], &normal[2]);
-			memcpy(vertexData + byteCounter, &normal, sizeof(vec3));
+			sscanf(lineString, "%*s %f %f %f", (float*)(vertexData + byteCounter), (float*)(vertexData + byteCounter + sizeof(float)), (float*)(vertexData + byteCounter + sizeof(float) * 2));
 			byteCounter += sizeof(vec3);
 		}
 
 		else if(strcmp(word, "vt") == 0)
 		{
 			vec2 uv;
-			sscanf(lineString, "%*s %f %f", &uv[0], &uv[1]);
-			memcpy(vertexData + byteCounter, &uv, sizeof(vec2));
+			sscanf(lineString, "%*s %f %f", (float*)(vertexData + byteCounter), (float*)(vertexData + byteCounter + sizeof(float)));
 			byteCounter += sizeof(vec2);
 		}
 
@@ -228,24 +228,40 @@ bigc_Model bigc_model_LoadOBJFromDisk(const char* filePath)
 			if((vertexAttributes & BIGC_VERTEX_UV) && (vertexAttributes & BIGC_VERTEX_NORMAL))
 			{
 				sscanf(lineString, "%*s %u/%*u/%*u %u/%*u/%*u %u/%*u/%*u", &indexData[indexCounter], &indexData[indexCounter + 1], &indexData[indexCounter + 2]);
+				*(indexData + indexCounter) -= 1;
+				*(indexData + indexCounter + 1) -= 1;
+				*(indexData + indexCounter + 2) -= 1;
+				//TODO swap normals to correct index
 			}
 
 			//Positions and UV's
 			else if(vertexAttributes & BIGC_VERTEX_UV)
 			{
-
+				sscanf(lineString, "%*s %u/%*u %u/%*u %u/%*u", &indexData[indexCounter], &indexData[indexCounter + 1], &indexData[indexCounter + 2]);
+				*(indexData + indexCounter) -= 1;
+				*(indexData + indexCounter + 1) -= 1;
+				*(indexData + indexCounter + 2) -= 1;
+				//TODO swap UVs to correct index
 			}
 
 			//Positions and normals
 			else if(vertexAttributes & BIGC_VERTEX_NORMAL)
 			{
-				sscanf(lineString, "%*s %u//%*u %u//%*u %u//%*u", &indexData[indexCounter], &indexData[indexCounter + 1]);
+				sscanf(lineString, "%*s %u//%*u %u//%*u %u//%*u", &indexData[indexCounter], &indexData[indexCounter + 1], &indexData[indexCounter + 2]);
+				*(indexData + indexCounter) -= 1;
+				*(indexData + indexCounter + 1) -= 1;
+				*(indexData + indexCounter + 2) -= 1;
+				//TODO swap normals to correct index
+				//TODO swap UVs to correct index
 			}
 
 			//Only positions
 			else
 			{
-
+				sscanf(lineString, "%*s %u %u %u", &indexData[indexCounter], &indexData[indexCounter + 1], &indexData[indexCounter + 2]);
+				*(indexData + indexCounter) -= 1;
+				*(indexData + indexCounter + 1) -= 1;
+				*(indexData + indexCounter + 2) -= 1;
 			}
 
 			indexCounter += 3;
@@ -254,9 +270,8 @@ bigc_Model bigc_model_LoadOBJFromDisk(const char* filePath)
 		memset(lineString, 0, sizeof(lineString));
 	}
 
-	//now actually fill the arrays
 	fclose(filePointer);
-
+	
 	bigc_Model model = bigc_model_SendToGPU(vertexData, vertexByteSize * vertexCount, &vertexLayout, indexData, indexCount * sizeof(GLuint));
 	return model;
 }

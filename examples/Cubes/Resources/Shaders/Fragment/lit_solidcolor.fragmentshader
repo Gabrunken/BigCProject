@@ -24,10 +24,10 @@ void main()
 			cross(dFdx(fragPos), dFdy(fragPos))
 			);
 
-		lightValue = dot(flatNormal, lightPosition);
+		lightValue = max(0.1f, dot(flatNormal, lightPosition));
 	}
 
-	outColor = vec4(color) * lightValue;
+	outColor = color * lightValue;
 }
 
 //#end
