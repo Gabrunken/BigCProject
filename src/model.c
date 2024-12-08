@@ -7,6 +7,7 @@ bigc_Model bigc_model_SendToGPU(const void* vertexData, unsigned int bytesOfVert
 					   const bigc_VertexDataLayout* vertexDataLayout,
 					   const unsigned int* indexData, unsigned int bytesOfIndices)
 {
+
 	//GPU side model
 	GLuint vertexArrayHandle;
 	glGenVertexArrays(1, &vertexArrayHandle);
@@ -41,6 +42,7 @@ bigc_Model bigc_model_SendToGPU(const void* vertexData, unsigned int bytesOfVert
 							  (const void*)offset);
 
 		offset += vertexDataLayout->bytesToNextAttributes[attribute];
+
 	}
 
 	//CPU side model
@@ -133,7 +135,7 @@ bigc_Model bigc_model_LoadOBJFromDisk(const char* filePath)
 
 		else if(strcmp(word, "f") == 0)
 		{
-			indexCount+=3;
+			indexCount += 3;
 		}
 
 		memset(lineString, 0, sizeof(lineString));
@@ -167,6 +169,15 @@ bigc_Model bigc_model_LoadOBJFromDisk(const char* filePath)
 
 	//malloc for indices
 	indexData = (GLuint*)malloc(indexCount * sizeof(GLuint));
+
+	GLuint* normalIndexData = NULL;
+	GLuint* uvIndexData = NULL;
+
+	if(vertexAttributes & BIGC_VERTEX_NORMAL)
+		normalIndexData = (GLuint*)malloc(indexCount * sizeof(GLuint));
+	
+	if(vertexAttributes & BIGC_VERTEX_UV)
+		uvIndexData = (GLuint*)malloc(indexCount * sizeof(GLuint));
 
 	uint32_t indexCounter = 0;
 
@@ -227,32 +238,56 @@ bigc_Model bigc_model_LoadOBJFromDisk(const char* filePath)
 			//Positions, UV's and normals
 			if((vertexAttributes & BIGC_VERTEX_UV) && (vertexAttributes & BIGC_VERTEX_NORMAL))
 			{
-				sscanf(lineString, "%*s %u/%*u/%*u %u/%*u/%*u %u/%*u/%*u", &indexData[indexCounter], &indexData[indexCounter + 1], &indexData[indexCounter + 2]);
+				sscanf(lineString, "%*s %u/%u/%u %u/%u/%u %u/%u/%u",
+					&indexData[indexCounter], &uvIndexData[indexCounter], &normalIndexData[indexCounter],
+					&indexData[indexCounter + 1], &uvIndexData[indexCounter + 1], &normalIndexData[indexCounter + 1],
+					&indexData[indexCounter + 2], &uvIndexData[indexCounter + 2], &normalIndexData[indexCounter + 2]);
+
 				*(indexData + indexCounter) -= 1;
 				*(indexData + indexCounter + 1) -= 1;
 				*(indexData + indexCounter + 2) -= 1;
-				//TODO swap normals to correct index
+
+				*(normalIndexData + indexCounter) -= 1;
+				*(normalIndexData + indexCounter + 1) -= 1;
+				*(normalIndexData + indexCounter + 2) -= 1;
+			
+				*(uvIndexData + indexCounter) -= 1;
+				*(uvIndexData + indexCounter + 1) -= 1;
+				*(uvIndexData + indexCounter + 2) -= 1;
 			}
 
 			//Positions and UV's
 			else if(vertexAttributes & BIGC_VERTEX_UV)
 			{
-				sscanf(lineString, "%*s %u/%*u %u/%*u %u/%*u", &indexData[indexCounter], &indexData[indexCounter + 1], &indexData[indexCounter + 2]);
+				sscanf(lineString, "%*s %u/%u %u/%u %u/%u",
+					&indexData[indexCounter], &uvIndexData[indexCounter],
+					&indexData[indexCounter + 1], &uvIndexData[indexCounter + 1],
+					&indexData[indexCounter + 2], &uvIndexData[indexCounter + 2]);
+				
 				*(indexData + indexCounter) -= 1;
 				*(indexData + indexCounter + 1) -= 1;
 				*(indexData + indexCounter + 2) -= 1;
-				//TODO swap UVs to correct index
+
+				*(uvIndexData + indexCounter) -= 1;
+				*(uvIndexData + indexCounter + 1) -= 1;
+				*(uvIndexData + indexCounter + 2) -= 1;
 			}
 
 			//Positions and normals
 			else if(vertexAttributes & BIGC_VERTEX_NORMAL)
 			{
-				sscanf(lineString, "%*s %u//%*u %u//%*u %u//%*u", &indexData[indexCounter], &indexData[indexCounter + 1], &indexData[indexCounter + 2]);
+				sscanf(lineString, "%*s %u//%u %u//%u %u//%u",
+					&indexData[indexCounter], &normalIndexData[indexCounter],
+					&indexData[indexCounter + 1], &normalIndexData[indexCounter + 1],
+					&indexData[indexCounter + 2], &normalIndexData[indexCounter + 2]);
+
 				*(indexData + indexCounter) -= 1;
 				*(indexData + indexCounter + 1) -= 1;
 				*(indexData + indexCounter + 2) -= 1;
-				//TODO swap normals to correct index
-				//TODO swap UVs to correct index
+
+				*(normalIndexData + indexCounter) -= 1;
+				*(normalIndexData + indexCounter + 1) -= 1;
+				*(normalIndexData + indexCounter + 2) -= 1;
 			}
 
 			//Only positions
@@ -272,7 +307,61 @@ bigc_Model bigc_model_LoadOBJFromDisk(const char* filePath)
 
 	fclose(filePointer);
 	
+	float* normalOriginalData = NULL;
+	float* uvOriginalData = NULL;
+
+	if(vertexAttributes & BIGC_VERTEX_NORMAL)
+	{
+		normalOriginalData = (float*)malloc(sizeof(vec3) * vertexCount);
+		memcpy(normalOriginalData, vertexData + vertexLayout.bytesToNextAttributes[0], sizeof(vec3) * vertexCount); //here i'm supposing that normals come right after positions, uvs might also come after positions so i should take this into account
+	}
+
+	if(vertexAttributes & BIGC_VERTEX_UV)
+	{
+		uvOriginalData = (float*)malloc(sizeof(vec2) * vertexCount);
+		memcpy(uvOriginalData, vertexData + vertexLayout.bytesToNextAttributes[1], sizeof(vec2) * vertexCount); //here i'm supposing that normals come right after positions, uvs might also come after positions so i should take this into account
+	}
+
+	if(vertexLayout.attributes > 1)
+	{
+		//rearrange normals and texture coordinates from .obj file
+		for(uint32_t vertex = 0; vertex < vertexCount; vertex++)
+		{
+			//parse through indices until we find index of number "vertex"
+			for(uint32_t index = 0; index < indexCount; index++)
+			{
+				if(*(indexData + index) == vertex)
+				{
+					//now swap basing ourselves with normalIndexData and uvIndexData
+					if(vertexAttributes & BIGC_VERTEX_NORMAL)
+					{
+						//here i'm supposing that normals come right after positions, uvs might also come after positions so i should take this into account
+						memcpy(vertexData + vertexLayout.bytesToNextAttributes[0] + (vertex * vertexLayout.bytesToNextValues[1]),
+							   normalOriginalData + normalIndexData[index] * vertexLayout.attributeComponents[1], vertexLayout.bytesToNextValues[1]);
+					}
+
+					if(vertexAttributes & BIGC_VERTEX_UV)
+					{
+						//here i'm supposing that normals come right after positions, uvs might also come after positions so i should take this into account
+						memcpy(vertexData + vertexLayout.bytesToNextAttributes[1] + (vertex * vertexLayout.bytesToNextValues[2]),
+							   uvOriginalData + uvIndexData[index] * vertexLayout.attributeComponents[2], vertexLayout.bytesToNextValues[2]);
+					}
+
+					break;
+				}
+			}
+		}
+	}
+
 	bigc_Model model = bigc_model_SendToGPU(vertexData, vertexByteSize * vertexCount, &vertexLayout, indexData, indexCount * sizeof(GLuint));
+
+	free(vertexData);
+	free(normalOriginalData);
+	free(uvOriginalData);
+	free(indexData);
+	free(normalIndexData);
+	free(uvIndexData);
+
 	return model;
 }
 

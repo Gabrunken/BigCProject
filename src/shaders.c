@@ -160,6 +160,58 @@ bigc_ShaderProgram bigc_shaders_LoadFromDisk(const char* vertexShaderPath, const
 	return shaderProgram;
 }
 
+void bigc_shaders_SetIntOrBool(bigc_ShaderProgram* shader, const char* variableName, int value)
+{
+	if(shader->handle == 0)
+	{
+		#ifdef DEBUG
+		BIGC_LOG_WARNING("cannot set a float uniform in an invalid shader");
+		printf("\tName: %s\n", variableName);
+		#endif
+		return;
+	}
+
+	int location = -1;
+
+	//Check before if the location is already stored in shader hash-map
+	for(unsigned char i = 0; i < shader->uniformsStored; i++)
+	{
+		//Check if the uniforms match by name
+		if (strcmp(shader->uniformNames[i], variableName) == 0)
+		{
+			location = shader->uniformLocations[i];
+		}
+	}
+
+	//Here we didn't find the uniform stored inside the shader, so we store it now for future fetching
+	if(location == -1)
+	{
+		location = glGetUniformLocation(shader->handle, variableName);
+
+		//Confirm that it did find the uniform inside
+		if(location == -1)
+		{
+			#ifdef DEBUG
+			BIGC_LOG_WARNING("a uniform was not found");
+			printf("\tName: %s\n", variableName);
+			#endif
+			return;
+		}
+
+		strcpy(shader->uniformNames[shader->uniformsStored], variableName);
+		shader->uniformLocations[shader->uniformsStored] = location;
+		shader->uniformsStored++;
+	}
+
+	if(bigc_currentlyBoundShader != shader->handle)
+	{
+		glUseProgram(shader->handle);
+		bigc_currentlyBoundShader = shader->handle;
+	}
+
+	glUniform1i(location, value);
+}
+
 void bigc_shaders_SetFloat(bigc_ShaderProgram* shader, const char* variableName, float value)
 {
 	if(shader->handle == 0)

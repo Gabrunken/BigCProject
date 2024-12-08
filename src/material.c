@@ -14,10 +14,8 @@ void bigc_material_UploadDataToShader(const bigc_Material* material)
 			bigc_shaders_SetFloat(material->shaderReference, material->shaderReference->uniformNames[i], material->storedValues[i][0]);
 			break;
 
-		case BIGC_INT_UNIFORM:
-			break;
-
-		case BIGC_BOOLEAN_UNIFORM:
+		case BIGC_INT_OR_BOOL_UNIFORM:
+			bigc_shaders_SetIntOrBool(material->shaderReference, material->shaderReference->uniformNames[i], material->storedValues[i][0]);
 			break;
 
 		case BIGC_VECTOR2_UNIFORM:
@@ -40,6 +38,32 @@ void bigc_material_UploadDataToShader(const bigc_Material* material)
 			break;
 		}
 	}
+}
+
+void bigc_material_UpdateIntOrBool(bigc_Material* material, const char* variableName, int value)
+{
+	//Check before if the uniform actually exists in the shader's hash-map
+	for(unsigned char i = 0; i < material->shaderReference->uniformsStored; i++)
+	{
+		//Check if the uniforms match by name
+		if(strcmp(material->shaderReference->uniformNames[i], variableName) == 0)
+		{
+			//Now check if they the material's stored value matches with by value
+			if(material->storedValues[i][0] != value)
+			{
+				material->storedValues[i][0] = value;
+				material->storedValuesDataTypes[i] = BIGC_INT_OR_BOOL_UNIFORM;
+				bigc_shaders_SetFloat(material->shaderReference, variableName, value);
+			}
+
+			//Otherwise, don't update the uniform
+		}
+	}
+
+	//if we are in the end, and it didn't find it, set it in the shader, so we create a new uniform in the shader
+	material->storedValues[material->shaderReference->uniformsStored][0] = value;
+	material->storedValuesDataTypes[material->shaderReference->uniformsStored] = BIGC_INT_OR_BOOL_UNIFORM;
+	bigc_shaders_SetIntOrBool(material->shaderReference, variableName, value);
 }
 
 void bigc_material_UpdateFloat(bigc_Material* material, const char* variableName, float value)

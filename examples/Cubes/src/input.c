@@ -7,6 +7,8 @@ extern float deltaTime;
 extern float moveSpeed;
 vec3 moveAmount;
 
+extern bigc_Material sphereMaterial;
+
 void CursorPositionCallback(GLFWwindow* window, double windowX, double windowY)
 {
 
@@ -121,6 +123,16 @@ void KeyboardCallback(GLFWwindow* window, int key, int scancode, int action, int
 	case GLFW_KEY_F2:
 		if (action == GLFW_PRESS)
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		break;
+
+	case GLFW_KEY_F3:
+		if (action == GLFW_PRESS)
+			bigc_material_UpdateIntOrBool(&sphereMaterial, "smoothShaded", FALSE);
+		break;
+
+	case GLFW_KEY_F4:
+		if (action == GLFW_PRESS)
+			bigc_material_UpdateIntOrBool(&sphereMaterial, "smoothShaded", TRUE);
 		break;
 	}
 

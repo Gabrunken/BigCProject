@@ -10,12 +10,17 @@ out vec4 outColor;
 
 void main()
 {
-	float lightValue = 0.0f;
-	vec3 lightPosition = vec3(1.0f, 1.0f, 1.0f);
+	vec3 lightColor = vec3(1.0f);
+	vec3 lightPos = vec3(2.0f, 2.0f, 2.0f);
+
+	float ambientStrength = 0.1f;
+	float diffuseValue = 0.0f;
+
+	vec3 lightDir = normalize(lightPos - fragPos);
 
 	if(smoothShaded)
 	{
-		lightValue = dot(normalize(normal), lightPosition);
+		diffuseValue = max(ambientStrength, dot(normalize(normal), lightDir));
 	}
 
 	else
@@ -24,10 +29,12 @@ void main()
 			cross(dFdx(fragPos), dFdy(fragPos))
 			);
 
-		lightValue = max(0.1f, dot(flatNormal, lightPosition));
+		diffuseValue = max(ambientStrength, dot(flatNormal, lightDir));
 	}
 
-	outColor = color * lightValue;
+	vec3 finalColor = diffuseValue * lightColor * vec3(color);
+
+	outColor = vec4(finalColor, 1.0f);
 }
 
 //#end

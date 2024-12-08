@@ -18,7 +18,7 @@ extern mat4 bigc_modelMatrix;
 extern mat4 bigc_projectionMatrix;
 extern mat4 bigc_viewMatrix;
 
-static bigc_Material sphereMaterial; 
+bigc_Material sphereMaterial; 
 
 extern GLFWwindow* bigc_mainWindow;
 
@@ -42,7 +42,7 @@ void Initialize()
 	glfwSetMouseButtonCallback(bigc_mainWindow, MouseButtonCallback);
 	glfwSetKeyCallback(bigc_mainWindow, KeyboardCallback);
 
-	sphereModel = bigc_model_LoadOBJFromDisk("./Resources/Models/text.obj");
+	sphereModel = bigc_model_LoadOBJFromDisk("./Resources/Models/sphere.obj");
 
 	unlitTexturedShaderProgram = bigc_shaders_LoadFromDisk("./Resources/Shaders/Vertex/unlit_textured.vertexshader",
 												   "./Resources/Shaders/Fragment/unlit_textured.fragmentshader");
@@ -58,7 +58,7 @@ void Initialize()
 	
 	sphereMaterial.shaderReference = &litSolidColorShaderProgram;
 
-	bigc_material_UpdateVec4(&sphereMaterial, "color", (vec4){0.0f, 1.0f, 0.5f, 1.0f});
+	bigc_material_UpdateVec4(&sphereMaterial, "color", (vec4){0.4f, 0.6f, 1.0f, 1.0f});
 
 	bigc_prop_Initialize(&sphereProp, &sphereModel, &sphereMaterial);
 

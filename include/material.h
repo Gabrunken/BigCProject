@@ -2,12 +2,11 @@
 #define material_h
 
 #define BIGC_FLOAT_UNIFORM 0
-#define BIGC_INT_UNIFORM 1
-#define BIGC_BOOLEAN_UNIFORM 2
-#define BIGC_VECTOR2_UNIFORM 3 
-#define BIGC_VECTOR3_UNIFORM 4 
-#define BIGC_VECTOR4_UNIFORM 5 
-#define BIGC_MATRIX_UNIFORM 6
+#define BIGC_INT_OR_BOOL_UNIFORM 1
+#define BIGC_VECTOR2_UNIFORM 2
+#define BIGC_VECTOR3_UNIFORM 3
+#define BIGC_VECTOR4_UNIFORM 4
+#define BIGC_MATRIX_UNIFORM 5
 
 #include <shaders.h>
 #include <cglm/call.h>
@@ -22,6 +21,7 @@ typedef struct bigc_Material
 } bigc_Material;
 
 void bigc_material_UploadDataToShader(const bigc_Material* material);
+void bigc_material_UpdateIntOrBool(bigc_Material* material, const char* variableName, int value);
 void bigc_material_UpdateFloat(bigc_Material* material, const char* variableName, float value);
 void bigc_material_UpdateVec3(bigc_Material* material, const char* variableName, vec3 value);
 void bigc_material_UpdateVec4(bigc_Material* material, const char* variableName, vec4 value);

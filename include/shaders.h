@@ -22,6 +22,7 @@ typedef struct bigc_ShaderProgram
 
 bigc_ShaderProgram bigc_shaders_LoadFromDisk(const char* vertexShaderPath, const char* fragmentShaderPath);
 
+void bigc_shaders_SetIntOrBool(bigc_ShaderProgram* shader, const char* variableName, int value);
 void bigc_shaders_SetFloat(bigc_ShaderProgram* shader, const char* variableName, float value);
 void bigc_shaders_SetVec3(bigc_ShaderProgram* shader, const char* variableName, vec3 value);
 void bigc_shaders_SetVec4(bigc_ShaderProgram* shader, const char* variableName, vec4 value);
