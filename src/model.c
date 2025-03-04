@@ -47,13 +47,32 @@ bigc_Model bigc_model_SendToGPU(const void* vertexData, unsigned int bytesOfVert
 
 	//CPU side model
 	bigc_Model model = {vertexArrayHandle,
-				   vertexBufferHandle,
-				   indexBufferHandle,
-				   bytesOfIndices / sizeof(unsigned int)};
+				   		{vertexBufferHandle},
+				   		indexBufferHandle,
+				   		bytesOfIndices / sizeof(unsigned int),
+						vertexDataLayout->attributes};
 
 	return model;
 }
 
+void bigc_model_PushInstancedAttribute(bigc_Model* model, const void* data, uint32_t dataSize, uint8_t attributeComponents, GLenum componentType, uint32_t offsetToValue)
+{
+	glBindVertexArray(model->vertexArrayHandle);
+
+	GLint instanceVBO;
+	glGenBuffers(1, &instanceVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
+	glBufferData(GL_ARRAY_BUFFER, dataSize, data, GL_STATIC_DRAW);
+	
+	glEnableVertexAttribArray(model->attributes);
+	glVertexAttribPointer(model->attributes, attributeComponents, componentType, GL_FALSE, offsetToValue, (void*)0);
+	glVertexAttribDivisor(model->attributes, 1);
+
+	model->vertexBufferHandles[model->attributes] = instanceVBO;
+	model->attributes++;
+}
+
+//04-03-2025 14:46 -> Probabilmente da riscrivere tutta questa funzione, usare il metodo di testing just-in-time sarebbe ottimale, poichè non so nemmeno dove l'errore si trova
 bigc_Model bigc_model_LoadOBJFromDisk(const char* filePath)
 {
 	//let's set up everything before opening and parsing the file
@@ -84,6 +103,8 @@ bigc_Model bigc_model_LoadOBJFromDisk(const char* filePath)
 	//now let's read line by line
 	uint8_t lineLength;
 	char lineString[100];
+
+	uint32_t uvCount = 0;
 
 	while(fgets(lineString, sizeof(lineString), filePointer) != NULL)
 	{
@@ -120,7 +141,7 @@ bigc_Model bigc_model_LoadOBJFromDisk(const char* filePath)
 			}
 		}
 
-		else if(strcmp(word, "vt") == 0) //danger: texture coordinates could be more than positions, altho i'm allocating memory for vertexSize * positionCount, its gonna create UB pushing further data into vertexData, this is done because of UV seams.
+		else if(strcmp(word, "vt") == 0) //here UVs are almost always more than positions and/or normals, for that after i must duplicate the positions and normals until they match by count with UVs
 		{
 			if(!(vertexAttributes & BIGC_VERTEX_UV))
 			{
@@ -131,6 +152,8 @@ bigc_Model bigc_model_LoadOBJFromDisk(const char* filePath)
 				vertexLayout.bytesToNextValues[vertexLayout.attributes - 1] = sizeof(vec2);
 				vertexByteSize += sizeof(vec2);
 			}
+
+			uvCount++;
 		}
 
 		else if(strcmp(word, "f") == 0)
@@ -139,6 +162,11 @@ bigc_Model bigc_model_LoadOBJFromDisk(const char* filePath)
 		}
 
 		memset(lineString, 0, sizeof(lineString));
+	}
+
+	if(uvCount > vertexCount)
+	{
+		vertexCount = vertexCount; //now when i'll malloc, i'll actually allocate enough memory for me to duplicate what i need to duplicate (normals and positions most of the times)
 	}
 
 	//if vertexCount is == 0, positions are not present in the file, so return a bad model
@@ -181,18 +209,13 @@ bigc_Model bigc_model_LoadOBJFromDisk(const char* filePath)
 
 	uint32_t indexCounter = 0;
 
-	if(vertexData == NULL)
+	if(indexData == NULL)
 	{
 		#ifdef DEBUG
 		BIGC_LOG_ERROR("failed to malloc index data while loading an .obj");
 		#endif
 		return BIGC_BAD_MODEL;
 	}
-
-	//duplicate attributes which do not match by count with the positions (like normals could be less than positions)
-	//and duplicate positions too if necessary! like if there are uv seams, you know if there are by looking at UV coordinates, if they are more than positions, than theres a seam
-	//for that normals gotta be duplicated too
-	//TODO
 
 	uint32_t byteCounter = 0;
 	fseek(filePointer, 0, SEEK_SET); //reset the file cursor to read it from the start
@@ -322,6 +345,7 @@ bigc_Model bigc_model_LoadOBJFromDisk(const char* filePath)
 		memcpy(uvOriginalData, vertexData + vertexLayout.bytesToNextAttributes[1], sizeof(vec2) * vertexCount); //here i'm supposing that normals come right after positions, uvs might also come after positions so i should take this into account
 	}
 
+
 	if(vertexLayout.attributes > 1)
 	{
 		//rearrange normals and texture coordinates from .obj file
@@ -370,8 +394,15 @@ void bigc_model_FreeFromGPU(bigc_Model* model)
 	//Free everything about the model, if it is not already set at 0.
 	if(model->vertexArrayHandle != 0)
 		glDeleteVertexArrays(1, &model->vertexArrayHandle);
-	if(model->vertexBufferHandle != 0)
-		glDeleteBuffers(1, &model->vertexBufferHandle);
+
+	for(int i = 0; i < BIGC_MAX_VBO_PER_MODEL; i++)
+	{
+		if(model->vertexBufferHandles[i] != 0)
+		{
+			glDeleteBuffers(1, &model->vertexBufferHandles[i]);	
+		}
+	}
+
 	if(model->indexBufferHandle != 0)
 		glDeleteBuffers(1, &model->indexBufferHandle);
 }

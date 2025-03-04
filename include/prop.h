@@ -24,7 +24,7 @@ void bigc_prop_Move(bigc_Prop* prop, vec3 movement);
 void bigc_prop_Rotate(bigc_Prop* prop, vec3 rotation);
 void bigc_prop_Scale(bigc_Prop* prop, vec3 scale);
 
-//updating the only existing MVP with an instance of a prop
-void bigc_prop_LoadToMVP(bigc_Prop* prop);
+//updating the only existing model matrix with an instance of a prop
+void bigc_prop_LoadToModelMatrix(bigc_Prop* prop);
 
 #endif

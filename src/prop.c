@@ -52,7 +52,7 @@ void bigc_prop_Scale(bigc_Prop* prop, vec3 scale)
 	glmc_vec3_add(prop->transform.scale, scale, prop->transform.scale);
 }
 
-void bigc_prop_LoadToMVP(bigc_Prop* prop)
+void bigc_prop_LoadToModelMatrix(bigc_Prop* prop)
 {
 	//make model matrix
 	glmc_mat4_identity(bigc_modelMatrix);
@@ -62,8 +62,6 @@ void bigc_prop_LoadToMVP(bigc_Prop* prop)
 	glmc_rotate_z(bigc_modelMatrix, prop->transform.rotation[2], bigc_modelMatrix);
 	glmc_scale(bigc_modelMatrix, prop->transform.scale);
 	
-	//update the mvp in shader
-	bigc_material_UpdateMatrix(prop->materialReference, BIGC_MODEL_MATRIX_NAME, bigc_modelMatrix);	
-	bigc_material_UpdateMatrix(prop->materialReference, BIGC_VIEW_MATRIX_NAME, bigc_viewMatrix);	
-	bigc_material_UpdateMatrix(prop->materialReference, BIGC_PROJECTION_MATRIX_NAME, bigc_projectionMatrix);	
+	//update the model matrix in shader
+	bigc_material_UpdateMat4(prop->materialReference, BIGC_MODEL_MATRIX_NAME, bigc_modelMatrix);
 }

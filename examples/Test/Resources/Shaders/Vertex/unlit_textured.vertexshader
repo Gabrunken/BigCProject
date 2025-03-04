@@ -1,0 +1,22 @@
+#version 460 core
+
+layout (location = 0) in vec4 inPosition;
+layout (location = 1) in vec2 inTexCoords;
+
+out vec2 texCoords;
+
+layout (std140, binding = 0) uniform Matrices
+{
+    mat4 projectionMatrix;
+    mat4 viewMatrix;
+};
+
+uniform mat4 modelMatrix;
+
+void main()
+{
+	texCoords = inTexCoords;
+	gl_Position = projectionMatrix * viewMatrix * modelMatrix * inPosition;
+}
+
+//#end

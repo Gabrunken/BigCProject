@@ -20,7 +20,7 @@ static void GLAPIENTRY HandleOpenGLErrors(
 }
 #endif
 
-char bigc_Initialize(const char* windowTitle, unsigned short windowWidth, unsigned short windowHeight)
+uint8_t bigc_Initialize(const char* windowTitle, unsigned short windowWidth, unsigned short windowHeight)
 {
 	if(!glfwInit())
 	{
@@ -66,8 +66,17 @@ char bigc_Initialize(const char* windowTitle, unsigned short windowWidth, unsign
 	glDebugMessageCallback(HandleOpenGLErrors, NULL);
 	#endif
 
+	bigc_ubo_InitializeModule();//This must be initialized before the "draw" module
 	bigc_draw_InitializeModule();
 	bigc_texture_InitializeModule();
 
 	return BIGC_INIT_SUCCESS;
+}
+
+void bigc_Terminate()
+{
+	glfwTerminate();
+
+	extern bigc_UBO bigc_viewProjectionUBO;
+	bigc_ubo_FreeFromGPU(&bigc_viewProjectionUBO);
 }

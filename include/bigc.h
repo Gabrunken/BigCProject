@@ -23,6 +23,7 @@
 #include <camera.h>
 #include <transform.h>
 #include <bitscalculations.h>
+#include <ubo.h>
 
 //If the program is in debug mode
 #ifdef DEBUG
@@ -47,6 +48,7 @@
 
 #endif
 
-char bigc_Initialize(const char* windowTitle, unsigned short windowWidth, unsigned short windowHeight);
+uint8_t bigc_Initialize(const char* windowTitle, unsigned short windowWidth, unsigned short windowHeight);
+void bigc_Terminate();
 
 #endif

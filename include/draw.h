@@ -13,6 +13,8 @@ void bigc_draw_SetClearFlags(int flags);
 void bigc_draw_Model(const bigc_Model* model, const bigc_Material* materialReference);
 void bigc_draw_Prop(const bigc_Prop* prop);
 
+void bigc_draw_PropInstanced(const bigc_Prop* prop, uint32_t count);
+
 void bigc_draw_DrawCallback();
 
 #endif
