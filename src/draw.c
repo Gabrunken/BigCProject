@@ -34,6 +34,10 @@ void bigc_draw_InitializeModule()
 	glmc_mat4_identity(bigc_projectionMatrix);
 
 	bigc_viewProjectionUBO = bigc_ubo_Create(0, sizeof(mat4)*2, TRUE);
+
+	#ifdef DEBUG
+	BIGC_LOG_NOTE("Draw module initialized");
+	#endif
 }
 
 void bigc_draw_SetDrawCallback(void (*callback)(void))

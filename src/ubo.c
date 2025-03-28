@@ -7,6 +7,10 @@ static uint32_t maxUBOSize; //In bytes
 void bigc_ubo_InitializeModule()
 {
 	glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &maxUBOSize);
+
+	#ifdef DEBUG
+	BIGC_LOG_NOTE("UBO module initialized");
+	#endif
 }
 
 bigc_UBO bigc_ubo_Create(uint8_t bindingSlot, uint32_t uboSize, uint8_t changeOverTime)

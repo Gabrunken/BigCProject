@@ -24,6 +24,8 @@
 #include <transform.h>
 #include <bitscalculations.h>
 #include <ubo.h>
+#include <network.h>
+#include <winsock2.h>
 
 //If the program is in debug mode
 #ifdef DEBUG

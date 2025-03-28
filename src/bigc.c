@@ -64,11 +64,20 @@ uint8_t bigc_Initialize(const char* windowTitle, unsigned short windowWidth, uns
 	//Enable opengl debug messages to know what's wrong in case something went bad.
 	glEnable(GL_DEBUG_OUTPUT);
 	glDebugMessageCallback(HandleOpenGLErrors, NULL);
+	glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_NOTIFICATION, 0, NULL, GL_FALSE);
 	#endif
 
 	bigc_ubo_InitializeModule();//This must be initialized before the "draw" module
 	bigc_draw_InitializeModule();
 	bigc_texture_InitializeModule();
+
+	if(bigc_network_InitializeModule() == BIGC_FALSE)
+	{
+		#ifdef DEBUG
+		BIGC_LOG_ERROR("failed to initialize network module");
+		#endif
+		return BIGC_INIT_FAILED;
+	}
 
 	return BIGC_INIT_SUCCESS;
 }
