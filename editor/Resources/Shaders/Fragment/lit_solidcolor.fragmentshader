@@ -1,0 +1,86 @@
+#version 460 core
+
+in vec3 fragPos;
+in vec3 normal;
+in vec2 texCoords;
+
+struct Material
+{
+    vec4 color;
+    int shininess;
+};
+
+struct PointLight
+{
+	vec3 position;
+	vec3 color;
+	float constant;
+    float linear;
+    float quadratic;
+};
+
+struct DirectionalLight
+{
+    vec3 direction;
+    vec3 color;
+    float ambientStrength;
+    float specularStrength;
+};
+
+uniform Material material;
+uniform bool smoothShaded = true;
+
+layout (std140, binding = 1) uniform Lights
+{
+	vec3 skyColor;
+	DirectionalLight directionalLights[16];
+	int directionalLightCount;
+};
+
+uniform vec3 cameraPos;
+
+out vec4 outColor;
+
+vec3 CalculateDirectionalLight(DirectionalLight light, vec3 normal, vec3 cameraDir)
+{
+    vec3 lightDir = normalize(-light.direction);
+    
+    float diffuseValue = max(0.0f, dot(normal, lightDir));
+
+    vec3 reflectDir = reflect(lightDir, normal);
+    float specularValue = pow(max(dot(cameraDir, reflectDir), 0.0), material.shininess) * light.specularStrength;
+
+    return max((diffuseValue + specularValue) * light.color, skyColor * light.ambientStrength);
+}  
+
+void main()
+{
+	vec3 normalizedNormal = normalize(normal);
+	vec3 cameraDir = normalize(cameraPos - fragPos);
+
+	vec3 lightsValue = vec3(0.0f);
+
+	if(smoothShaded)
+	{
+		for(int i = 0; i < directionalLightCount; i++)
+		{
+			lightsValue += CalculateDirectionalLight(directionalLights[i], normalizedNormal, cameraDir);
+		}
+	}
+
+	else
+	{
+		vec3 flatNormal = normalize(
+			cross(dFdx(fragPos), dFdy(fragPos))
+			);
+
+		for(int i = 0; i < directionalLightCount; i++)
+		{
+			lightsValue += CalculateDirectionalLight(directionalLights[i], flatNormal, cameraDir);
+		}
+	}
+
+	vec3 finalColor = lightsValue * vec3(material.color);
+
+	outColor = vec4(finalColor, 1.0f);
+}

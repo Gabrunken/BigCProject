@@ -1,0 +1,27 @@
+#version 460 core
+
+layout (location = 0) in vec4 inPosition;
+layout (location = 1) in vec3 inNormal;
+layout (location = 2) in vec2 inTexCoords;
+
+layout (std140, binding = 0) uniform Matrices
+{
+    mat4 projectionMatrix;
+    mat4 viewMatrix;
+};
+
+uniform mat4 modelMatrix;
+
+out vec3 fragPos;
+out vec3 normal;
+out vec2 texCoords;
+
+void main()
+{
+	normal = mat3(transpose(inverse(modelMatrix))) * inNormal;
+	fragPos = vec3(modelMatrix * inPosition);
+	texCoords = inTexCoords;
+	gl_Position = projectionMatrix * viewMatrix * modelMatrix * inPosition;
+}
+
+//#end
